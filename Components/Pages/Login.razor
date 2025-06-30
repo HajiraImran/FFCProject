@@ -1,0 +1,167 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+@using FFCProject.Models
+@using FFCProject.Services
+@inject NavigationManager Navigation
+@inject FFCProject.Data.AppDbContext DbContext
+@inject EmailSystem EmailSender
+@using Microsoft.EntityFrameworkCore
+
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="login-wrapper d-flex justify-content-center align-items-center">
+        <div class="login-box text-center p-4">
+            <h3 class="mb-4 text-white">Login</h3>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger py-1">@ErrorMessage</div>
+            }
+
+            @if (!string.IsNullOrEmpty(SuccessMessage))
+            {
+                <div class="alert alert-success py-1">@SuccessMessage</div>
+            }
+
+            <div class="form-group mb-3">
+                <InputText class="form-control hover-effect" @bind-Value="loginModel.Email" placeholder="Email Address" autocomplete="email" />
+            </div>
+
+            <div class="form-group mb-3">
+                <InputText class="form-control hover-effect" type="password" @bind-Value="loginModel.Password" placeholder="Password" autocomplete="current-password" />
+            </div>
+
+            <div class="form-group mb-3">
+                <InputText class="form-control hover-effect" @bind-Value="loginModel.OTP" placeholder="Enter OTP" autocomplete="one-time-code" />
+            </div>
+
+            <button type="button" class="btn btn-secondary w-100 mb-2" @onclick="SendOTP">Send OTP</button>
+            <button type="submit" class="btn btn-light w-100 mb-3">Login</button>
+
+            <p class="text-white">Don't have an account? <a href="/register" class="text-white">Register</a></p>
+        </div>
+    </div>
+</EditForm>
+
+<style>
+    .hover-effect {
+        transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+    }
+
+        .hover-effect:hover {
+            background-color: rgba(255, 255, 255, 0.5) !important;
+            color: black !important;
+        }
+
+    .login-wrapper {
+        height: 100vh;
+        background: url("images/ffc.jpg") no-repeat center center fixed;
+        background-size: cover;
+    }
+
+    .login-box {
+        width: 370px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-control {
+        background-color: rgba(255, 255, 255, 0.3);
+        border: none;
+        color: white;
+    }
+
+        .form-control::placeholder {
+            color: #eee;
+        }
+
+        .form-control:focus {
+            background-color: rgba(255, 255, 255, 0.4);
+            color: black;
+            box-shadow: none;
+        }
+</style>
+
+@code {
+    private LoginModel loginModel = new();
+    private string ErrorMessage;
+    private string SuccessMessage;
+
+    private async Task SendOTP()
+    {
+        ErrorMessage = "";
+        SuccessMessage = "";
+
+        if (string.IsNullOrWhiteSpace(loginModel.Email))
+        {
+            ErrorMessage = "Enter your email before requesting OTP.";
+            return;
+        }
+
+        string otp = new Random().Next(100000, 999999).ToString();
+
+        var otpEntry = new OtpEntry
+        {
+            Email = loginModel.Email,
+            OTP = otp,
+            Expiry = DateTime.Now.AddMinutes(5)
+        };
+
+        DbContext.OtpEntries.Add(otpEntry);
+        await DbContext.SaveChangesAsync();
+
+        bool emailSent = await EmailSender.SendEmailAsync(
+            loginModel.Email,
+            "Your OTP for Login",
+            $"<p>Your OTP is: <strong>{otp}</strong></p><p>This code will expire in 5 minutes.</p>"
+        );
+
+        if (emailSent)
+        {
+            SuccessMessage = "✅ OTP sent to your email.";
+        }
+        else
+        {
+            ErrorMessage = "❌ Failed to send OTP. Check your email settings.";
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        ErrorMessage = "";
+        SuccessMessage = "";
+
+        var user = await DbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == loginModel.Email && u.Password == loginModel.Password);
+
+        if (user == null)
+        {
+            ErrorMessage = "Invalid credentials.";
+            return;
+        }
+
+        var otpRecord = await DbContext.OtpEntries
+            .OrderByDescending(o => o.Id)
+            .FirstOrDefaultAsync(o => o.Email == loginModel.Email && o.OTP == loginModel.OTP && o.Expiry > DateTime.Now);
+
+        if (otpRecord == null)
+        {
+            ErrorMessage = "Invalid or expired OTP.";
+            return;
+        }
+
+        // ✅ Login success
+        Navigation.NavigateTo("/weather");
+    }
+
+    public class LoginModel
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public string OTP { get; set; }
+    }
+}

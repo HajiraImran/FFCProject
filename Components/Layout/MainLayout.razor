@@ -1,0 +1,99 @@
+﻿@inherits LayoutComponentBase
+
+<style>
+    .top-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 10px;
+        background-color: #000; /* solid black now */
+    }
+
+    a.neon-btn {
+        all: unset;
+        display: inline-block;
+        padding: 6px 14px;
+        border: 2px solid transparent;
+        border-radius: 6px;
+        background: #000;
+        color: white;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        text-decoration: none !important;
+        cursor: pointer;
+    }
+
+        a.neon-btn:hover,
+        a.neon-btn.active {
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+
+
+
+    .top-row a i {
+        color: black; /* Default icon color */
+        font-size: 24px;
+        transition: color 0.3s ease;
+    }
+
+    .top-row a:hover i {
+        color: #00ffff; /* Neon cyan on hover */
+    }
+
+
+    .page {
+        display: flex;
+        height: 100vh;
+    }
+
+    .sidebar {
+        width: 250px;
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: white; /* change from #111 to white */
+        color: black; /* text color changed from white to black */
+    }
+
+    .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+</style>
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row">
+            <NavLink href="/login" class="neon-btn" activeClass="active">Login</NavLink>
+            <NavLink href="/about" class="neon-btn" activeClass="active">About</NavLink>
+            <NavLink href="/faq" class="neon-btn" activeClass="active">FAQ</NavLink>
+
+            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-linkedin-in"></i>
+            </a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />

@@ -1,0 +1,189 @@
+﻿@page "/register"
+@rendermode InteractiveServer
+@using FFCProject.Models
+@inject NavigationManager Navigation
+@inject FFCProject.Data.AppDbContext DbContext
+@using Microsoft.EntityFrameworkCore
+
+<EditForm Model="@newUser" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="login-wrapper">
+        <div class="login-box">
+            <h3 class="mb-4 text-white text-center">Register</h3>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger py-1">@ErrorMessage</div>
+            }
+
+            <!-- User Fields -->
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="newUser.FirstName" placeholder="First Name" />
+                <ValidationMessage For="@(() => newUser.FirstName)" />
+            </div>
+
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="newUser.LastName" placeholder="Last Name" />
+                <ValidationMessage For="@(() => newUser.LastName)" />
+            </div>
+
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="newUser.Username" placeholder="Username" />
+                <ValidationMessage For="@(() => newUser.Username)" />
+            </div>
+
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="newUser.Email" placeholder="Email" />
+                <ValidationMessage For="@(() => newUser.Email)" />
+            </div>
+
+            <div class="form-group">
+                <InputText class="form-control" type="password" @bind-Value="newUser.Password" placeholder="Password" />
+                <ValidationMessage For="@(() => newUser.Password)" />
+            </div>
+
+            <div class="form-group">
+                <InputText class="form-control" type="password" @bind-Value="newUser.ConfirmPassword" placeholder="Confirm Password" />
+                <ValidationMessage For="@(() => newUser.ConfirmPassword)" />
+            </div>
+
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="newUser.Designation" placeholder="Designation" />
+                <ValidationMessage For="@(() => newUser.Designation)" />
+            </div>
+
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="newUser.ContactNumber" placeholder="Contact Number" />
+                <ValidationMessage For="@(() => newUser.ContactNumber)" />
+            </div>
+
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="newUser.Address" placeholder="Address" />
+                <ValidationMessage For="@(() => newUser.Address)" />
+            </div>
+
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="newUser.PostalCode" placeholder="Postal Code" />
+                <ValidationMessage For="@(() => newUser.PostalCode)" />
+            </div>
+
+            <div class="form-group mb-3">
+                <InputText class="form-control" @bind-Value="newUser.PermanentAddress" placeholder="Permanent Address" />
+                <ValidationMessage For="@(() => newUser.PermanentAddress)" />
+            </div>
+
+            <button type="submit" class="btn-register">Register</button>
+
+            <p class="text-white mt-3 text-center">
+                Already have an account? <a href="/login" class="text-white"><u>Login</u></a>
+            </p>
+        </div>
+    </div>
+</EditForm>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .login-wrapper {
+        height: 100vh;
+        background: url("images/FFCNIGHT.jpeg") no-repeat center center fixed;
+        background-size: cover;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .login-box {
+        width: 100%;
+        max-width: 700px;
+        max-height: 95vh;
+        overflow-y: auto;
+        padding: 30px;
+        background: rgba(0, 0, 0, 0.55);
+        border-radius: 15px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+        color: white;
+    }
+
+    .form-control {
+        background-color: rgba(0, 0, 0, 0.7);
+        border: 2px solid transparent;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: white;
+        transition: all 0.3s ease;
+        width: 100%;
+        font-size: 13px;
+        height: 36px;
+    }
+
+        .form-control::placeholder {
+            color: #cccccc;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #00ffff;
+            background-color: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 6px #00ffff, 0 0 10px #00ffff88;
+        }
+
+    .btn-register {
+        width: 100%;
+        height: 40px;
+        background-color: #00ffff;
+        color: black;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        font-size: 14px;
+    }
+
+        .btn-register:hover {
+            background-color: #00cccc;
+        }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+</style>
+
+@code {
+    private User newUser = new();
+    private string ErrorMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        ErrorMessage = "";
+
+        if (newUser.Password != newUser.ConfirmPassword)
+        {
+            ErrorMessage = "Passwords do not match.";
+            return;
+        }
+
+        bool userExists = await DbContext.Users.AnyAsync(u => u.Username == newUser.Username);
+        if (userExists)
+        {
+            ErrorMessage = "Username already exists.";
+            return;
+        }
+
+        DbContext.Users.Add(newUser);
+        await DbContext.SaveChangesAsync();
+
+        Navigation.NavigateTo("/login");
+    }
+}
