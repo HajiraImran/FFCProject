@@ -5,6 +5,7 @@
 @inject NavigationManager Navigation
 @inject FFCProject.Data.AppDbContext DbContext
 @inject EmailSystem EmailSender
+@using Microsoft.AspNetCore.Cryptography.KeyDerivation
 @using Microsoft.EntityFrameworkCore
 
 <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
@@ -136,9 +137,9 @@
         SuccessMessage = "";
 
         var user = await DbContext.Users
-            .FirstOrDefaultAsync(u => u.Email == loginModel.Email && u.Password == loginModel.Password);
+            .FirstOrDefaultAsync(u => u.Email == loginModel.Email);
 
-        if (user == null)
+        if (user == null || !VerifyPassword(loginModel.Password, user.Password))
         {
             ErrorMessage = "Invalid credentials.";
             return;
@@ -146,7 +147,10 @@
 
         var otpRecord = await DbContext.OtpEntries
             .OrderByDescending(o => o.Id)
-            .FirstOrDefaultAsync(o => o.Email == loginModel.Email && o.OTP == loginModel.OTP && o.Expiry > DateTime.Now);
+            .FirstOrDefaultAsync(o =>
+                o.Email == loginModel.Email &&
+                o.OTP == loginModel.OTP &&
+                o.Expiry > DateTime.Now);
 
         if (otpRecord == null)
         {
@@ -156,6 +160,26 @@
 
         // ✅ Login success
         Navigation.NavigateTo("/weather");
+    }
+
+    private bool VerifyPassword(string enteredPassword, string storedPassword)
+    {
+        var parts = storedPassword.Split('.');
+        if (parts.Length != 2)
+            return false;
+
+        string salt = parts[0];
+        string storedHash = parts[1];
+        byte[] saltBytes = Convert.FromBase64String(salt);
+
+        string enteredHash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+            password: enteredPassword,
+            salt: saltBytes,
+            prf: KeyDerivationPrf.HMACSHA256,
+            iterationCount: 10000,
+            numBytesRequested: 256 / 8));
+
+        return storedHash == enteredHash;
     }
 
     public class LoginModel

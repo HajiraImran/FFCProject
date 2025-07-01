@@ -2,10 +2,8 @@
 
 namespace FFCProject.Models
 {
-    public class User
+    public class RegisterViewModel
     {
-        public int Id { get; set; }
-
         [Required(ErrorMessage = "First Name is required")]
         public string FirstName { get; set; }
 
@@ -22,6 +20,11 @@ namespace FFCProject.Models
         [Required(ErrorMessage = "Password is required")]
         [DataType(DataType.Password)]
         public string Password { get; set; }
+
+        [Required(ErrorMessage = "Confirm Password is required")]
+        [DataType(DataType.Password)]
+        [Compare("Password", ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; }
 
         [Required(ErrorMessage = "Designation is required")]
         public string Designation { get; set; }

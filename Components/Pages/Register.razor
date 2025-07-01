@@ -4,6 +4,8 @@
 @inject NavigationManager Navigation
 @inject FFCProject.Data.AppDbContext DbContext
 @using Microsoft.EntityFrameworkCore
+@using System.Security.Cryptography
+@using Microsoft.AspNetCore.Cryptography.KeyDerivation
 
 <EditForm Model="@newUser" OnValidSubmit="HandleValidSubmit">
     <DataAnnotationsValidator />
@@ -87,13 +89,14 @@
     html, body {
         margin: 0;
         padding: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        height: 100vh;
+        height: 100%;
+        background-color: #000 !important; /* Removes purple gradient */
         overflow: hidden;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     .login-wrapper {
-        height: 100vh;
+        min-height: 100vh;
         background: url("images/FFCNIGHT.jpeg") no-repeat center center fixed;
         background-size: cover;
         display: flex;
@@ -161,18 +164,29 @@
 </style>
 
 @code {
-    private User newUser = new();
+    private RegisterViewModel newUser = new(); // Now uses the ViewModel
     private string ErrorMessage;
+
+    private string HashPassword(string password, out string salt)
+    {
+        byte[] saltBytes = new byte[128 / 8];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(saltBytes);
+        salt = Convert.ToBase64String(saltBytes);
+
+        string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+            password: password,
+            salt: saltBytes,
+            prf: KeyDerivationPrf.HMACSHA256,
+            iterationCount: 10000,
+            numBytesRequested: 256 / 8));
+
+        return hashed;
+    }
 
     private async Task HandleValidSubmit()
     {
         ErrorMessage = "";
-
-        if (newUser.Password != newUser.ConfirmPassword)
-        {
-            ErrorMessage = "Passwords do not match.";
-            return;
-        }
 
         bool userExists = await DbContext.Users.AnyAsync(u => u.Username == newUser.Username);
         if (userExists)
@@ -181,7 +195,26 @@
             return;
         }
 
-        DbContext.Users.Add(newUser);
+        // Hash the password
+        string salt;
+        string hashedPassword = HashPassword(newUser.Password, out salt);
+
+        // Map ViewModel to User (Entity)
+        var user = new User
+        {
+            FirstName = newUser.FirstName,
+            LastName = newUser.LastName,
+            Username = newUser.Username,
+            Email = newUser.Email,
+            Password = $"{salt}.{hashedPassword}",
+            Designation = newUser.Designation,
+            ContactNumber = newUser.ContactNumber,
+            Address = newUser.Address,
+            PostalCode = newUser.PostalCode,
+            PermanentAddress = newUser.PermanentAddress
+        };
+
+        DbContext.Users.Add(user);
         await DbContext.SaveChangesAsync();
 
         Navigation.NavigateTo("/login");
