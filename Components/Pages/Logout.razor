@@ -1,0 +1,15 @@
+﻿@page "/logout"
+@using FFCProject.Services
+@inject UserStateService UserState
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Clear logged-in email
+        UserState.Clear();
+
+        // Redirect to login page (force reload)
+        Navigation.NavigateTo("/login", true);
+    }
+}

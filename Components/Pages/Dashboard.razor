@@ -1,21 +1,35 @@
-﻿
-@page "/dashboard"
+﻿@page "/dashboard"
+@using FFCProject.Services
+@using FFCProject.Data
+@using FFCProject.Models
+@inject UserStateService UserState
+@inject NavigationManager Navigation
+@inject AppDbContext DbContext
+@using Microsoft.EntityFrameworkCore
 
-<div class="dashboard-wrapper">
-    <!-- Logo on top -->
-    <img src="images/FFC-logo.png" alt="FFC Logo" class="dashboard-logo" />
+@if (user == null)
+{
+    <p class="text-white">Loading...</p>
+}
+else
+{
+    <div class="dashboard-wrapper">
+        <img src="images/FFC-logo.png" alt="FFC Logo" class="dashboard-logo" />
 
-    <h2>Welcome to your Dashboard!</h2>
+        <h2>Welcome, @user.FirstName @user.LastName!</h2>
 
-    <div class="dashboard-grid">
-        <a class="card-button" href="/projects">Total Projects: 5</a>
-        <a class="card-button" href="/users">Active Users: 12</a>
-        <a class="card-button" href="/login-history">Last Login: Today</a>
-        <a class="card-button" href="/profile">Your Profile</a>
-        <a class="card-button" href="/messages">Messages</a>
-        <a class="card-button" href="/settings">Account Settings</a>
+        <!-- ✅ USER INFO BOX REMOVED -->
+
+        <div class="dashboard-grid">
+            <a class="card-button" href="/projects">Total Projects: 5</a>
+            <a class="card-button" href="/users">Active Users: 12</a>
+            <a class="card-button" href="/login-history">Last Login: Today</a>
+            <a class="card-button" href="/profile">Your Profile</a>
+            <a class="card-button" href="/messages">Messages</a>
+            <a class="card-button" href="/settings">Account Settings</a>
+        </div>
     </div>
-</div>
+}
 
 <style>
     body {
@@ -70,6 +84,21 @@
             transform: scale(1.05);
             border-color: #00bfff;
             box-shadow: 0 0 15px #00bfff80;
-
         }
 </style>
+
+@code {
+    private User user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(UserState.Email))
+        {
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        user = await DbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == UserState.Email);
+    }
+}

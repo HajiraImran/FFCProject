@@ -1,0 +1,74 @@
+﻿@page "/profile"
+@using FFCProject.Services
+@using FFCProject.Data
+@using FFCProject.Models
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+@inject UserStateService UserState
+@using Microsoft.EntityFrameworkCore
+
+<h3 class="text-center text-white">Your Profile</h3>
+
+@if (user == null)
+{
+    <p class="text-white text-center">Loading profile...</p>
+}
+else
+{
+    <div class="profile-container">
+        <div class="profile-card">
+            <p><strong>Email:</strong> @user.Email</p>
+            <p><strong>Username:</strong> @user.Username</p>
+            <p><strong>First Name:</strong> @user.FirstName</p>
+            <p><strong>Last Name:</strong> @user.LastName</p>
+            <p><strong>Designation:</strong> @user.Designation</p>
+            <p><strong>Contact Number:</strong> @user.ContactNumber</p>
+            <p><strong>Address:</strong> @user.Address</p>
+            <p><strong>Postal Code:</strong> @user.PostalCode</p>
+            <p><strong>Permanent Address:</strong> @user.PermanentAddress</p>
+        </div>
+    </div>
+}
+
+<style>
+    .profile-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 20px;
+        min-height: 100vh;
+        background: linear-gradient(to right, #1c1c1c, #444);
+    }
+
+    .profile-card {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 30px;
+        border-radius: 12px;
+        color: #f1f1f1;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        backdrop-filter: blur(6px);
+    }
+
+        .profile-card p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+</style>
+
+@code {
+    private User user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(UserState.Email))
+        {
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        user = await DbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == UserState.Email);
+    }
+}

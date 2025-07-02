@@ -1,10 +1,12 @@
 ﻿@page "/login"
 @rendermode InteractiveServer
+
 @using FFCProject.Models
 @using FFCProject.Services
 @inject NavigationManager Navigation
 @inject FFCProject.Data.AppDbContext DbContext
 @inject EmailSystem EmailSender
+@inject UserStateService UserState
 @using Microsoft.AspNetCore.Cryptography.KeyDerivation
 @using Microsoft.EntityFrameworkCore
 
@@ -58,7 +60,7 @@
 
     .login-wrapper {
         height: 100vh;
-        background: linear-gradient(to bottom right, #2c2c2c, #bfa443); /* dark grey to gold */
+        background: linear-gradient(to bottom right, #2c2c2c, #bfa443);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -160,8 +162,9 @@
             return;
         }
 
-        // ✅ Login success
-        Navigation.NavigateTo("/weather");
+        // ✅ Login successful: store email and redirect
+        UserState.SetEmail(user.Email);
+        Navigation.NavigateTo("/dashboard");
     }
 
     private bool VerifyPassword(string enteredPassword, string storedPassword)
