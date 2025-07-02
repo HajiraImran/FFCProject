@@ -13,6 +13,11 @@
 
     <div class="login-wrapper">
         <div class="login-box">
+            <!-- ✅ FFC LOGO -->
+            <div class="text-center">
+                <img src="images/FFC-logo.png" alt="FFC Logo" class="ffc-logo mb-3" />
+            </div>
+
             <h3 class="mb-4 text-white text-center">Register</h3>
 
             @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -90,32 +95,39 @@
         margin: 0;
         padding: 0;
         height: 100%;
-        background-color: #000 !important; /* Removes purple gradient */
+        background-color: #000 !important;
         overflow: hidden;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     .login-wrapper {
         min-height: 100vh;
-        background: url("images/FFCNIGHT.jpeg") no-repeat center center fixed;
-        background-size: cover;
+        background:linear-gradient(to bottom right, #2c2c2c, #bfa443); /* dark grey to gold */
         display: flex;
         justify-content: center;
         align-items: center;
         padding: 20px;
     }
 
-    .login-box {
+    }
+
+    login-box {
         width: 100%;
         max-width: 700px;
         max-height: 95vh;
         overflow-y: auto;
         padding: 30px;
-        background: rgba(0, 0, 0, 0.55);
+        background: transparent; /* ✅ Overlay removed */
         border-radius: 15px;
         backdrop-filter: blur(12px);
         box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
         color: white;
+    }
+
+    .ffc-logo {
+        max-width: 150px;
+        height: auto;
+        margin-bottom: 10px;
     }
 
     .form-control {
@@ -123,7 +135,7 @@
         border: 2px solid transparent;
         border-radius: 8px;
         padding: 8px 12px;
-        color: white;
+        color: white; /* White text normally */
         transition: all 0.3s ease;
         width: 100%;
         font-size: 13px;
@@ -131,21 +143,23 @@
     }
 
         .form-control::placeholder {
-            color: #cccccc;
+            color: white; /* White placeholder */
         }
 
         .form-control:focus {
             outline: none;
             border-color: #00ffff;
             background-color: rgba(0, 0, 0, 0.8);
+            color: white; /* 👈 Force white text while typing */
             box-shadow: 0 0 6px #00ffff, 0 0 10px #00ffff88;
         }
+
 
     .btn-register {
         width: 100%;
         height: 40px;
-        background-color: #00ffff;
-        color: black;
+        background-color: black
+        color: white;
         font-weight: bold;
         border: none;
         border-radius: 8px;
@@ -155,7 +169,7 @@
     }
 
         .btn-register:hover {
-            background-color: #00cccc;
+            background-color: navy;
         }
 
     .form-group {
@@ -164,7 +178,7 @@
 </style>
 
 @code {
-    private RegisterViewModel newUser = new(); // Now uses the ViewModel
+    private RegisterViewModel newUser = new();
     private string ErrorMessage;
 
     private string HashPassword(string password, out string salt)
@@ -195,11 +209,9 @@
             return;
         }
 
-        // Hash the password
         string salt;
         string hashedPassword = HashPassword(newUser.Password, out salt);
 
-        // Map ViewModel to User (Entity)
         var user = new User
         {
             FirstName = newUser.FirstName,

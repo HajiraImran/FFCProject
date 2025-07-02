@@ -1,0 +1,75 @@
+﻿
+@page "/dashboard"
+
+<div class="dashboard-wrapper">
+    <!-- Logo on top -->
+    <img src="images/FFC-logo.png" alt="FFC Logo" class="dashboard-logo" />
+
+    <h2>Welcome to your Dashboard!</h2>
+
+    <div class="dashboard-grid">
+        <a class="card-button" href="/projects">Total Projects: 5</a>
+        <a class="card-button" href="/users">Active Users: 12</a>
+        <a class="card-button" href="/login-history">Last Login: Today</a>
+        <a class="card-button" href="/profile">Your Profile</a>
+        <a class="card-button" href="/messages">Messages</a>
+        <a class="card-button" href="/settings">Account Settings</a>
+    </div>
+</div>
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+    }
+
+    .dashboard-wrapper {
+        padding: 40px 20px;
+        text-align: center;
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/images/farm.jpg') center/cover no-repeat;
+        min-height: 100vh;
+        color: white;
+    }
+
+    .dashboard-logo {
+        max-width: 120px;
+        margin-bottom: 20px;
+    }
+
+    .dashboard-grid {
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
+    .card-button {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 12px;
+        width: 200px;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 18px;
+        font-weight: 600;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        text-decoration: none;
+        color: #fff;
+        transition: 0.3s ease;
+        border: 2px solid transparent;
+        backdrop-filter: blur(4px);
+    }
+
+        .card-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+            border-color: #00bfff;
+            box-shadow: 0 0 15px #00bfff80;
+
+        }
+</style>

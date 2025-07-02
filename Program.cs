@@ -10,8 +10,8 @@ builder.Services.AddScoped(sp =>
     new EmailSystem(
         "smtp.gmail.com",
         587,
-        "hajiraimran900@gmail.com",           // Your Gmail
-        "xvcfhdfwootddzlp"                 // Your app-specific password
+        "h.abbubakar10@gmail.com",           // Your Gmail
+        "kzkb iufg knjf csvt\r\n"                 // Your app-specific password
     )
 );
 

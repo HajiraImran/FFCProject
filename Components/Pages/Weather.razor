@@ -62,3 +62,31 @@ else
         public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
     }
 }
+<style>
+    h1, p, th, td {
+        color: white !important; /* Makes text visible on black background */
+    }
+
+    table {
+        background-color: rgba(255, 255, 255, 0.05); /* optional subtle box */
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        padding: 10px;
+        border: 1px solid #444; /* subtle border */
+    }
+
+    th {
+        background-color: #222; /* dark header row */
+    }
+
+    tr:nth-child(even) {
+        background-color: #111;
+    }
+
+    tr:hover {
+        background-color: #333;
+    }
+</style>
