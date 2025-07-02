@@ -7,8 +7,15 @@
         justify-content: flex-end;
         gap: 10px;
         padding: 10px;
-        background-color: #000; /* solid black now */
+        background-color: black !important; /* force black */
+        color: white !important; /* force white text */
     }
+
+        .top-row a,
+        .top-row i,
+        .top-row .navbar-brand {
+            color: white !important;
+        }
 
     a.neon-btn {
         all: unset;
@@ -57,8 +64,8 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        background-color: white; /* change from #111 to white */
-        color: black; /* text color changed from white to black */
+        background-color: black; /* change from #111 to white */
+        color: white; /* text color changed from white to black */
     }
 
     .content {
