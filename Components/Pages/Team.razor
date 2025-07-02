@@ -1,0 +1,176 @@
+﻿@page "/team"
+
+<h2 class="title">Meet Our Team</h2>
+
+<div class="team-container">
+    @foreach (var member in TeamMembers)
+    {
+        <div class="team-card">
+            <img src="@member.ImageUrl" alt="@member.Name" class="team-image" />
+            <h3>@member.Name</h3>
+            <p class="designation">@member.University</p>
+            <p>@member.Department</p>
+
+            @if (!string.IsNullOrWhiteSpace(member.LinkedInUrl) || !string.IsNullOrWhiteSpace(member.InstagramUrl))
+            {
+                <div class="social-links">
+                    @if (!string.IsNullOrWhiteSpace(member.LinkedInUrl))
+                    {
+                        <a href="@member.LinkedInUrl" target="_blank" title="LinkedIn">
+                            <i class="fab fa-linkedin social-icon"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(member.InstagramUrl))
+                    {
+                        <a href="@member.InstagramUrl" target="_blank" title="Instagram">
+                            <i class="fab fa-instagram social-icon"></i>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .title {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 32px;
+        color: #333;
+    }
+
+    .team-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 30px;
+        padding: 40px;
+    }
+
+    .team-card {
+        background-color: #f8f8f8;
+        border-radius: 12px;
+        padding: 20px;
+        max-width: 300px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        color: black;
+    }
+
+        .team-card:hover {
+            transform: translateY(-8px);
+        }
+
+    .team-image {
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 15px;
+        border: 3px solid #00bfff;
+    }
+
+    .designation {
+        font-weight: bold;
+        color: #007acc;
+        margin-bottom: 10px;
+    }
+
+    .social-links {
+        margin-top: 12px;
+    }
+
+    .social-icon {
+        font-size: 24px;
+        margin: 0 8px;
+        color: #0077b5; /* LinkedIn blue default */
+        transition: transform 0.2s ease;
+    }
+
+        .social-icon:hover {
+            transform: scale(1.2);
+            color: #ff0080; /* For hover effect */
+        }
+
+    .fab.fa-instagram {
+        color: #e4405f;
+    }
+
+    .fab.fa-linkedin {
+        color: #0077b5;
+    }
+</style>
+
+@code {
+    public class TeamMember
+    {
+        public string Name { get; set; }
+        public string University { get; set; }
+        public string Department { get; set; }
+        public string ImageUrl { get; set; }
+        public string LinkedInUrl { get; set; }
+        public string InstagramUrl { get; set; }
+    }
+
+    private List<TeamMember> TeamMembers = new List<TeamMember>
+    {
+        new TeamMember {
+            Name = "Aneeza Sherani",
+            University = "Riphah International",
+            Department = "Computer Science",
+            ImageUrl = "images/aneimage.jpg",
+            LinkedInUrl = "https://www.linkedin.com/in/aneeza-sherani-457631293",
+            InstagramUrl = "https://www.instagram.com/aniza._.shirani78"
+        },
+        new TeamMember {
+            Name = "Maryum Malik",
+            University = "Riphah International",
+            Department = "Computer Science",
+            ImageUrl = "images/malik.jpg",
+             LinkedInUrl = "https://www.linkedin.com/in/maryum-malik-3b5364367/?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app",
+            InstagramUrl = "https://www.instagram.com/areymaryumtum/?igsh=MXdzN2U5dGNuZ3N6aw%3D%3D&utm_source=qr#"
+        },
+        new TeamMember {
+            Name = "Ayesha Akhtar",
+            University = "Riphah International",
+            Department = "Computer Science",
+            ImageUrl = "images/ayesha.jpg",
+             LinkedInUrl = "https://www.linkedin.com/in/aneeza-sherani-457631293",
+            InstagramUrl = "https://www.instagram.com/aniza._.shirani78"
+        },
+        new TeamMember {
+            Name = "Ayaan jehangi",
+            University = "TMUC",
+            Department = "Computer Science",
+            ImageUrl = "images/ayaan.jpg",
+             LinkedInUrl = "https://www.linkedin.com/in/ayaan-jehangir-a8210b371/",
+            InstagramUrl = "https://www.instagram.com/ayaa.n_j/?igsh=MWs1bTdkYzNpd20weQ%3D%3D#"
+        },
+        new TeamMember {
+            Name = "Abubakar",
+            University = "LUMS University",
+            Department = "Computer Science",
+            ImageUrl = "images/abu.jpg",
+             LinkedInUrl = "https://www.linkedin.com/in/aneeza-sherani-457631293",
+            InstagramUrl = "https://www.instagram.com/aniza._.shirani78"
+        },
+        new TeamMember {
+            Name = "Adeesha",
+            University = "Riphah International",
+            Department = "Computer Science",
+            ImageUrl = "images/dee.jpg",
+             LinkedInUrl = "https://www.linkedin.com/in/adeesha-s-42a825293?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app ",
+            InstagramUrl = "https://www.instagram.com/adeesha_004/?igsh=MXRxNmRvNHBpZHdyMQ%3D%3D#"
+        },
+        new TeamMember {
+            Name = "Hajra Imran",
+            University = "Riphah International",
+            Department = "Computer Science",
+            ImageUrl = "images/haj.jpg",
+             LinkedInUrl = "https://www.linkedin.com/in/aneeza-sherani-457631293",
+            InstagramUrl = "https://www.instagram.com/aniza._.shirani78"
+        },
+    };
+}
