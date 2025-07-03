@@ -14,11 +14,13 @@
 else
 {
     <div class="dashboard-wrapper">
-        <img src="images/FFC-logo.png" alt="FFC Logo" class="dashboard-logo" />
+        <!-- Logo + Logout Row -->
+        <div class="header-bar">
+            <img src="images/FFC-logo.png" alt="FFC Logo" class="dashboard-logo" />
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
 
         <h2>Welcome, @user.FirstName @user.LastName!</h2>
-
-        <!-- ✅ USER INFO BOX REMOVED -->
 
         <div class="dashboard-grid">
             <a class="card-button" href="/projects">Total Projects: 5</a>
@@ -44,12 +46,35 @@ else
         background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/images/farm.jpg') center/cover no-repeat;
         min-height: 100vh;
         color: white;
+        position: relative;
+    }
+
+    .header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
     }
 
     .dashboard-logo {
         max-width: 120px;
-        margin-bottom: 20px;
     }
+
+    .logout-btn {
+        background-color: #ff4d4d;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        font-weight: bold;
+        border-radius: 6px;
+        transition: 0.3s ease;
+        margin-right: 10px;
+    }
+
+        .logout-btn:hover {
+            background-color: #e60000;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
 
     .dashboard-grid {
         display: flex;
