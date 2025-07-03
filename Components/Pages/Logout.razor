@@ -12,12 +12,13 @@
         {
             hasRedirected = true;
 
-            // Yield to avoid navigation exceptions during component render
+            // 🧹 Clear login state
+            UserState.Clear();
+
+            // ✅ Allow navigation after state is cleared
             await Task.Yield();
 
             Navigation.NavigateTo("/login", forceLoad: true);
         }
     }
 }
-
-

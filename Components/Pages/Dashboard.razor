@@ -7,9 +7,13 @@
 @inject AppDbContext DbContext
 @using Microsoft.EntityFrameworkCore
 
-@if (user == null)
+@if (isLoading)
 {
     <p class="text-white">Loading...</p>
+}
+else if (user == null)
+{
+    <p class="text-danger">Unauthorized. Redirecting...</p>
 }
 else
 {
@@ -96,7 +100,7 @@ else
         text-align: center;
         font-size: 18px;
         font-weight: 600;
-        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         text-decoration: none;
         color: #fff;
         transition: 0.3s ease;
@@ -114,6 +118,7 @@ else
 
 @code {
     private User user;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -125,5 +130,15 @@ else
 
         user = await DbContext.Users
             .FirstOrDefaultAsync(u => u.Email == UserState.Email);
+
+        if (user == null)
+        {
+            // Clear possibly corrupted session and redirect
+            UserState.Clear();
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        isLoading = false;
     }
 }
