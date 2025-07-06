@@ -18,21 +18,37 @@ else if (user == null)
 else
 {
     <div class="dashboard-wrapper">
-        <!-- Logo + Logout Row -->
+        <!-- Header -->
         <div class="header-bar">
             <img src="images/FFC-logo.png" alt="FFC Logo" class="dashboard-logo" />
             <a href="/logout" class="logout-btn">Logout</a>
         </div>
 
-        <h2>Welcome, @user.FirstName @user.LastName!</h2>
+        <h2>Welcome, @user.FirstName @user.LastName! (@user.Designation)</h2>
 
         <div class="dashboard-grid">
-            <a class="card-button" href="/projects">Total Projects: 5</a>
-            <a class="card-button" href="/users">Active Users: 12</a>
-            <a class="card-button" href="/login-history">Last Login: Today</a>
-            <a class="card-button" href="/profile">Your Profile</a>
-            <a class="card-button" href="/messages">Messages</a>
-            <a class="card-button" href="/settings">Account Settings</a>
+            @if (user.Designation == "HR")
+            {
+                <a class="card-button" href="/hr/employees">Manage Employees</a>
+                <a class="card-button" href="/hr/attendance">Attendance</a>
+                <a class="card-button" href="/profile">Your Profile</a>
+            }
+            else if (user.Designation == "IT")
+            {
+                <a class="card-button" href="/it/support">IT Support Requests</a>
+                <a class="card-button" href="/it/assets">Manage IT Assets</a>
+                <a class="card-button" href="/profile">Your Profile</a>
+            }
+            else if (user.Designation == "Procurement")
+            {
+                <a class="card-button" href="/procurement/orders">Purchase Orders</a>
+                <a class="card-button" href="/procurement/vendors">Vendors</a>
+                <a class="card-button" href="/profile">Your Profile</a>
+            }
+            else
+            {
+                <a class="card-button" href="/profile">Default Dashboard</a>
+            }
         </div>
     </div>
 }
@@ -133,7 +149,6 @@ else
 
         if (user == null)
         {
-            // Clear possibly corrupted session and redirect
             UserState.Clear();
             Navigation.NavigateTo("/login", true);
             return;
