@@ -9,6 +9,8 @@
 @inject UserStateService UserState
 @using Microsoft.AspNetCore.Cryptography.KeyDerivation
 @using Microsoft.EntityFrameworkCore
+@implements IDisposable
+
 <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
     <DataAnnotationsValidator />
     <ValidationSummary />
@@ -40,10 +42,30 @@
                 <div class="form-group mb-3">
                     <InputText class="form-control hover-effect" @bind-Value="loginModel.OTP" placeholder="Enter OTP" autocomplete="one-time-code" />
                 </div>
+
+                <div class="text-white mb-2">
+                    ⏳ OTP expires in @OtpTimeLeft seconds
+                </div>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-light w-100 mb-3"
+                        @onclick="SendAndStartOtp"
+                        disabled="@(CanResendOtp == false || IsLoading)">
+                    🔁 Resend OTP
+                </button>
             }
 
-            <button type="submit" class="btn btn-light w-100 mb-3">
-                @(IsOtpStage ? "Verify OTP" : "Login")
+            <button type="submit"
+                    class="btn btn-light w-100 mb-3"
+                    disabled="@IsLoading">
+                @if (IsLoading)
+                {
+                    <span>Logging in...</span>
+                }
+                else
+                {
+                    <span>Login</span>
+                }
             </button>
 
             <p class="text-white">Don't have an account? <a href="/register" class="text-white">Register</a></p>
@@ -98,76 +120,173 @@
     private LoginModel loginModel = new();
     private string ErrorMessage;
     private string SuccessMessage;
+
     private bool IsOtpStage = false;
-    private int CurrentOtpEntryId;
+    private int OtpTimeLeft; // seconds
+    private int MaxOtpAttempts = 3;
+    private int CurrentOtpAttempts = 0;
+    private bool CanResendOtp = false;
+    private bool IsLoading = false;
+
+    private Timer otpTimer;
+    private Timer resendTimer;
 
     private async Task HandleLogin()
     {
+        IsLoading = true;
         ErrorMessage = "";
         SuccessMessage = "";
+        StateHasChanged();
 
-        if (!IsOtpStage)
+        try
         {
-            // Step 1: Verify credentials
-            var user = await DbContext.Users
-                .FirstOrDefaultAsync(u => u.Email == loginModel.Email);
-
-            if (user == null || !VerifyPassword(loginModel.Password, user.Password))
+            if (!IsOtpStage)
             {
-                ErrorMessage = "Invalid email or password.";
-                return;
-            }
+                var user = await DbContext.Users
+                    .FirstOrDefaultAsync(u => u.Email == loginModel.Email);
 
-            // Step 2: Credentials valid, generate and send OTP
-            string otp = new Random().Next(100000, 999999).ToString();
+                if (user == null || !VerifyPassword(loginModel.Password, user.Password))
+                {
+                    ErrorMessage = "Invalid email or password.";
+                    await ClearMessagesAfterDelay();
+                    return;
+                }
 
-            var otpEntry = new OtpEntry
-            {
-                Email = loginModel.Email,
-                OTP = otp,
-                Expiry = DateTime.Now.AddMinutes(5)
-            };
-
-            DbContext.OtpEntries.Add(otpEntry);
-            await DbContext.SaveChangesAsync();
-
-            bool emailSent = await EmailSender.SendEmailAsync(
-                loginModel.Email,
-                "Your OTP for Login",
-                $"<p>Your OTP is: <strong>{otp}</strong></p><p>This code will expire in 5 minutes.</p>"
-            );
-
-            if (emailSent)
-            {
-                SuccessMessage = "✅ OTP sent to your email.";
-                IsOtpStage = true;
-                CurrentOtpEntryId = otpEntry.Id;
+                await SendAndStartOtp();
             }
             else
             {
-                ErrorMessage = "❌ Failed to send OTP. Try again.";
+                CurrentOtpAttempts++;
+
+                if (CurrentOtpAttempts > MaxOtpAttempts)
+                {
+                    ErrorMessage = "❌ Too many incorrect OTP attempts.";
+                    IsOtpStage = false;
+                    loginModel.OTP = "";
+
+                    // Clear old OTPs
+                    var oldOtps = DbContext.OtpEntries.Where(o => o.Email == loginModel.Email);
+                    DbContext.OtpEntries.RemoveRange(oldOtps);
+                    await DbContext.SaveChangesAsync();
+
+                    await ClearMessagesAfterDelay();
+                    return;
+                }
+
+                var otpRecord = await DbContext.OtpEntries
+                    .OrderByDescending(o => o.Id)
+                    .FirstOrDefaultAsync(o =>
+                        o.Email == loginModel.Email &&
+                        o.OTP == loginModel.OTP &&
+                        o.Expiry > DateTime.Now);
+
+                if (otpRecord == null)
+                {
+                    // ❌ Clear old OTPs after wrong attempt
+                    var oldOtps = DbContext.OtpEntries.Where(o => o.Email == loginModel.Email);
+                    DbContext.OtpEntries.RemoveRange(oldOtps);
+                    await DbContext.SaveChangesAsync();
+
+                    ErrorMessage = $"❌ Invalid OTP. {MaxOtpAttempts - CurrentOtpAttempts} attempts left.";
+                    await ClearMessagesAfterDelay();
+                    return;
+                }
+
+                // ✅ OTP is valid
+                DbContext.OtpEntries.Remove(otpRecord);
+                await DbContext.SaveChangesAsync();
+
+                UserState.SetEmail(loginModel.Email);
+                loginModel.OTP = "";
+                Navigation.NavigateTo("/dashboard", true);
             }
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SendAndStartOtp()
+    {
+        // 🧹 Clear old OTPs for this email
+        var oldOtps = DbContext.OtpEntries.Where(o => o.Email == loginModel.Email);
+        DbContext.OtpEntries.RemoveRange(oldOtps);
+        await DbContext.SaveChangesAsync();
+
+        string otp = new Random().Next(100000, 999999).ToString();
+
+        var otpEntry = new OtpEntry
+        {
+            Email = loginModel.Email,
+            OTP = otp,
+            Expiry = DateTime.Now.AddMinutes(5)
+        };
+
+        DbContext.OtpEntries.Add(otpEntry);
+        await DbContext.SaveChangesAsync();
+
+        bool emailSent = await EmailSender.SendEmailAsync(
+            loginModel.Email,
+            "Your OTP for Login",
+            $"<p>Your OTP is: <strong>{otp}</strong></p><p>This code will expire in 5 minutes.</p>"
+        );
+
+        if (emailSent)
+        {
+            SuccessMessage = "✅ OTP sent to your email.";
+            IsOtpStage = true;
+            CurrentOtpAttempts = 0;
+            StartOtpCountdown();
+            StartResendCooldown();
         }
         else
         {
-            // Step 3: Verify OTP
-            var otpRecord = await DbContext.OtpEntries
-                .OrderByDescending(o => o.Id)
-                .FirstOrDefaultAsync(o =>
-                    o.Email == loginModel.Email &&
-                    o.OTP == loginModel.OTP &&
-                    o.Expiry > DateTime.Now);
-
-            if (otpRecord == null)
-            {
-                ErrorMessage = "Invalid or expired OTP.";
-                return;
-            }
-
-            // ✅ OTP valid: log in user
-            UserState.SetEmail(loginModel.Email);
-            Navigation.NavigateTo("/dashboard");
+            ErrorMessage = "❌ Failed to send OTP. Try again.";
         }
+
+        await ClearMessagesAfterDelay();
+    }
+
+    private void StartOtpCountdown(int seconds = 300)
+    {
+        OtpTimeLeft = seconds;
+        otpTimer?.Dispose();
+        otpTimer = new Timer(async _ =>
+        {
+            if (OtpTimeLeft > 0)
+            {
+                OtpTimeLeft--;
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                otpTimer?.Dispose();
+                ErrorMessage = "⏰ OTP expired. Please resend.";
+                IsOtpStage = false;
+                loginModel.OTP = "";
+
+                // Clear expired OTP
+                var oldOtps = DbContext.OtpEntries.Where(o => o.Email == loginModel.Email);
+                DbContext.OtpEntries.RemoveRange(oldOtps);
+                await DbContext.SaveChangesAsync();
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }, null, 0, 1000);
+    }
+
+    private void StartResendCooldown(int seconds = 30)
+    {
+        CanResendOtp = false;
+        resendTimer?.Dispose();
+        resendTimer = new Timer(async _ =>
+        {
+            CanResendOtp = true;
+            resendTimer?.Dispose();
+            await InvokeAsync(StateHasChanged);
+        }, null, seconds * 1000, Timeout.Infinite);
     }
 
     private bool VerifyPassword(string enteredPassword, string storedPassword)
@@ -188,6 +307,20 @@
             numBytesRequested: 256 / 8));
 
         return storedHash == enteredHash;
+    }
+
+    private async Task ClearMessagesAfterDelay(int delayMilliseconds = 4000)
+    {
+        await Task.Delay(delayMilliseconds);
+        ErrorMessage = "";
+        SuccessMessage = "";
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        otpTimer?.Dispose();
+        resendTimer?.Dispose();
     }
 
     public class LoginModel
