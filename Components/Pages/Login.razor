@@ -29,13 +29,16 @@
                 <div class="alert alert-success py-1">@SuccessMessage</div>
             }
 
-            <div class="form-group mb-3">
-                <InputText class="form-control hover-effect" @bind-Value="loginModel.Email" placeholder="Email Address" autocomplete="email" />
-            </div>
+            @if (!IsOtpStage)
+            {
+                <div class="form-group mb-3">
+                    <InputText class="form-control hover-effect" @bind-Value="loginModel.Email" placeholder="Email Address" autocomplete="email" />
+                </div>
 
-            <div class="form-group mb-3">
-                <InputText class="form-control hover-effect" type="password" @bind-Value="loginModel.Password" placeholder="Password" autocomplete="current-password" />
-            </div>
+                <div class="form-group mb-3">
+                    <InputText class="form-control hover-effect" type="password" @bind-Value="loginModel.Password" placeholder="Password" autocomplete="current-password" />
+                </div>
+            }
 
             @if (IsOtpStage)
             {
@@ -68,7 +71,10 @@
                 }
             </button>
 
-            <p class="text-white">Don't have an account? <a href="/register" class="text-white">Register</a></p>
+            @if (!IsOtpStage)
+            {
+                <p class="text-white">Don't have an account? <a href="/register" class="text-white">Register</a></p>
+            }
         </div>
     </div>
 </EditForm>
