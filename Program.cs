@@ -2,6 +2,7 @@
 using FFCProject.Services;
 using FFCProject.Data;
 using Microsoft.EntityFrameworkCore;
+using NetcodeHub.Packages.Components.Toast;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,8 @@ builder.Services.AddControllers();
 
 // ✅ ADD THIS: Register user state service
 builder.Services.AddSingleton<UserStateService>();
+
+builder.Services.AddScoped<ToastService>();          
 
 var app = builder.Build();
 

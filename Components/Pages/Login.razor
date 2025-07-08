@@ -1,5 +1,7 @@
 ﻿@page "/login"
 @rendermode InteractiveServer
+@using NetcodeHub.Packages.Components.Toast;
+@inject ToastService ToastService
 
 @using FFCProject.Models
 @using FFCProject.Services
@@ -11,6 +13,8 @@
 @using Microsoft.EntityFrameworkCore
 @implements IDisposable
 
+<Toast @ref="ToastService.ToastComponent" />
+
 <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
     <DataAnnotationsValidator />
     <ValidationSummary />
@@ -18,16 +22,6 @@
     <div class="login-wrapper d-flex justify-content-center align-items-center">
         <div class="login-box text-center p-4">
             <h3 class="mb-4 text-white">Login</h3>
-
-            @if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                <div class="alert alert-danger py-1">@ErrorMessage</div>
-            }
-
-            @if (!string.IsNullOrEmpty(SuccessMessage))
-            {
-                <div class="alert alert-success py-1">@SuccessMessage</div>
-            }
 
             @if (!IsOtpStage)
             {
@@ -124,11 +118,8 @@
 
 @code {
     private LoginModel loginModel = new();
-    private string ErrorMessage;
-    private string SuccessMessage;
-
     private bool IsOtpStage = false;
-    private int OtpTimeLeft; // seconds
+    private int OtpTimeLeft;
     private int MaxOtpAttempts = 3;
     private int CurrentOtpAttempts = 0;
     private bool CanResendOtp = false;
@@ -140,8 +131,6 @@
     private async Task HandleLogin()
     {
         IsLoading = true;
-        ErrorMessage = "";
-        SuccessMessage = "";
         StateHasChanged();
 
         try
@@ -153,8 +142,7 @@
 
                 if (user == null || !VerifyPassword(loginModel.Password, user.Password))
                 {
-                    ErrorMessage = "Invalid email or password.";
-                    await ClearMessagesAfterDelay();
+                    ToastService.ShowErrorToast("❌ Invalid email or password.", "Login Failed");
                     return;
                 }
 
@@ -166,16 +154,14 @@
 
                 if (CurrentOtpAttempts > MaxOtpAttempts)
                 {
-                    ErrorMessage = "❌ Too many incorrect OTP attempts.";
+                    ToastService.ShowErrorToast("❌ Too many incorrect OTP attempts.", "OTP Failed");
                     IsOtpStage = false;
                     loginModel.OTP = "";
 
-                    // Clear old OTPs
                     var oldOtps = DbContext.OtpEntries.Where(o => o.Email == loginModel.Email);
                     DbContext.OtpEntries.RemoveRange(oldOtps);
                     await DbContext.SaveChangesAsync();
 
-                    await ClearMessagesAfterDelay();
                     return;
                 }
 
@@ -188,17 +174,14 @@
 
                 if (otpRecord == null)
                 {
-                    // ❌ Clear old OTPs after wrong attempt
                     var oldOtps = DbContext.OtpEntries.Where(o => o.Email == loginModel.Email);
                     DbContext.OtpEntries.RemoveRange(oldOtps);
                     await DbContext.SaveChangesAsync();
 
-                    ErrorMessage = $"❌ Invalid OTP. {MaxOtpAttempts - CurrentOtpAttempts} attempts left.";
-                    await ClearMessagesAfterDelay();
+                    ToastService.ShowErrorToast($"❌ Invalid OTP. {MaxOtpAttempts - CurrentOtpAttempts} attempts left.", "OTP Error");
                     return;
                 }
 
-                // ✅ OTP is valid
                 DbContext.OtpEntries.Remove(otpRecord);
                 await DbContext.SaveChangesAsync();
 
@@ -216,7 +199,6 @@
 
     private async Task SendAndStartOtp()
     {
-        // 🧹 Clear old OTPs for this email
         var oldOtps = DbContext.OtpEntries.Where(o => o.Email == loginModel.Email);
         DbContext.OtpEntries.RemoveRange(oldOtps);
         await DbContext.SaveChangesAsync();
@@ -241,7 +223,7 @@
 
         if (emailSent)
         {
-            SuccessMessage = "✅ OTP sent to your email.";
+            ToastService.ShowSuccessToast("✅ OTP sent to your email.", "OTP Sent");
             IsOtpStage = true;
             CurrentOtpAttempts = 0;
             StartOtpCountdown();
@@ -249,10 +231,8 @@
         }
         else
         {
-            ErrorMessage = "❌ Failed to send OTP. Try again.";
+            ToastService.ShowErrorToast("❌ Failed to send OTP. Try again.", "Email Error");
         }
-
-        await ClearMessagesAfterDelay();
     }
 
     private void StartOtpCountdown(int seconds = 300)
@@ -269,11 +249,10 @@
             else
             {
                 otpTimer?.Dispose();
-                ErrorMessage = "⏰ OTP expired. Please resend.";
+                ToastService.ShowErrorToast("⏰ OTP expired. Please resend.", "OTP Expired");
                 IsOtpStage = false;
                 loginModel.OTP = "";
 
-                // Clear expired OTP
                 var oldOtps = DbContext.OtpEntries.Where(o => o.Email == loginModel.Email);
                 DbContext.OtpEntries.RemoveRange(oldOtps);
                 await DbContext.SaveChangesAsync();
@@ -313,14 +292,6 @@
             numBytesRequested: 256 / 8));
 
         return storedHash == enteredHash;
-    }
-
-    private async Task ClearMessagesAfterDelay(int delayMilliseconds = 4000)
-    {
-        await Task.Delay(delayMilliseconds);
-        ErrorMessage = "";
-        SuccessMessage = "";
-        StateHasChanged();
     }
 
     public void Dispose()
