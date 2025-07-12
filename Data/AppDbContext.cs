@@ -21,5 +21,8 @@ namespace FFCProject.Data
         public DbSet<User> Users { get; set; }
         public DbSet<OtpEntry> OtpEntries { get; set; }
 
+        public DbSet<Employee> Employees { get; set; }
+
+
     }
 }

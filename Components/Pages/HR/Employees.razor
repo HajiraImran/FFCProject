@@ -1,0 +1,152 @@
+﻿@page "/hr/employees"
+@using FFCProject.Data
+@using FFCProject.Models
+@using Microsoft.EntityFrameworkCore
+@using FFCProject.Services
+@inject AppDbContext DbContext
+@inject UserStateService UserState
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+@if (isLoading)
+{
+    <p class="text-white">Loading employees...</p>
+}
+else if (currentUser == null || currentUser.Designation?.ToLower() != "hr")
+{
+    <p class="text-danger">Unauthorized. Redirecting...</p>
+}
+else
+{
+    <h3 class="text-white">Employee Management</h3>
+
+    <button class="btn btn-success mb-3" @onclick="ShowCreateForm">➕ Add Employee</button>
+
+    @if (showForm)
+    {
+        <EditForm Model="currentEmployee" OnValidSubmit="SaveEmployee">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="currentEmployee.FirstName" placeholder="First Name" />
+            </div>
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="currentEmployee.LastName" placeholder="Last Name" />
+            </div>
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="currentEmployee.Email" placeholder="Email" />
+            </div>
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="currentEmployee.ContactNumber" placeholder="Contact Number" />
+            </div>
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="currentEmployee.Designation" placeholder="Designation" />
+            </div>
+            <div class="form-group">
+                <InputText class="form-control" @bind-Value="currentEmployee.Department" placeholder="Department" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">💾 Save</button>
+            <button type="button" class="btn btn-secondary ml-2" @onclick="CancelForm">❌ Cancel</button>
+        </EditForm>
+    }
+
+    <table class="table table-dark table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Designation</th>
+                <th>Department</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var emp in employees)
+            {
+                <tr>
+                    <td>@emp.FirstName @emp.LastName</td>
+                    <td>@emp.Email</td>
+                    <td>@emp.ContactNumber</td>
+                    <td>@emp.Designation</td>
+                    <td>@emp.Department</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" @onclick="@(() => EditEmployee(emp))">✏️ Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteEmployee(emp))">🗑️ Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Employee> employees;
+    private bool isLoading = true;
+    private bool showForm = false;
+    private Employee currentEmployee = new Employee();
+    private User currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(UserState.Email))
+        {
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        currentUser = await DbContext.Users.FirstOrDefaultAsync(u => u.Email == UserState.Email);
+
+        if (currentUser == null || currentUser.Designation?.ToLower() != "hr")
+        {
+            Navigation.NavigateTo("/unauthorized", true); // Optionally create an Unauthorized page
+            return;
+        }
+
+        await LoadEmployees();
+        isLoading = false;
+    }
+
+    private async Task LoadEmployees()
+    {
+        employees = await DbContext.Employees.ToListAsync();
+    }
+
+    private void ShowCreateForm()
+    {
+        currentEmployee = new Employee();
+        showForm = true;
+    }
+
+    private void EditEmployee(Employee emp)
+    {
+        currentEmployee = emp;
+        showForm = true;
+    }
+
+    private async Task SaveEmployee()
+    {
+        if (currentEmployee.Id == 0)
+        {
+            DbContext.Employees.Add(currentEmployee);
+        }
+
+        await DbContext.SaveChangesAsync();
+        showForm = false;
+        await LoadEmployees();
+    }
+
+    private async Task DeleteEmployee(Employee emp)
+    {
+        DbContext.Employees.Remove(emp);
+        await DbContext.SaveChangesAsync();
+        await LoadEmployees();
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+    }
+}
