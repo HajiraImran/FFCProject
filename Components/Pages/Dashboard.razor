@@ -21,11 +21,10 @@ else
         <!-- Header -->
         <div class="header-bar">
             <img src="images/FFC-logo.png" alt="FFC Logo" class="dashboard-logo" />
-            <a href="/logout" class="logout-btn">Logout</a>
+           
         </div>
 
-        <h2 class="welcome-text">Welcome, @user.FirstName @user.LastName!</h2>
-
+        
         <!-- Grid Cards -->
         <div class="dashboard-grid">
             @if (user.Designation?.ToLower() == "hr")
@@ -136,7 +135,7 @@ else
     }
 
     .card-button {
-        background: rgba(255, 255, 255, 0.07);
+        background: rgba(255, 255, 255, 0.15); /* More contrast for black icons */
         border-radius: 16px;
         padding: 30px 20px;
         color: #fff;
@@ -148,20 +147,27 @@ else
         transition: 0.3s ease;
         border: 1px solid transparent;
         backdrop-filter: blur(6px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
     }
 
         .card-button:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: scale(1.03);
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.04);
             border-color: #f1c40f;
             box-shadow: 0 0 25px rgba(241, 196, 15, 0.5);
         }
 
+
     .card-icon {
         font-size: 2.8rem;
         margin-bottom: 12px;
-        color: #f1c40f;
+        color: #000; /* Black icon color */
+        transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    .card-button:hover .card-icon {
+        transform: rotate(8deg) scale(1.1);
+        color: #f1c40f; /* Icon changes to gold on hover */
     }
 
     @@media screen and (max-width: 768px) {

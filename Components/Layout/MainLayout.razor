@@ -1,4 +1,8 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Components.Web
+@inherits LayoutComponentBase
+@inject FFCProject.Services.UserStateService UserState
+@inject NavigationManager Navigation
+
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
@@ -86,20 +90,31 @@
     </div>
 
     <main>
-        <div class="top-row"> 
-            <NavLink href="/login" class="neon-btn" activeClass="active">Login</NavLink>
-            <a href="https://ffc.com.pk/about-us/" target="_blank" rel="noopener noreferrer" class="neon-btn">About</a>
-            <NavLink href="/faq" class="neon-btn" activeClass="active">FAQ</NavLink>
+        <div class="top-row">
+            @if (!string.IsNullOrEmpty(UserState.Email))
+            {
+                <!-- Show only username and Logout button -->
+                <span class="navbar-brand">Welcome, @UserState.Email?.Split('@')[0]</span>
+                <NavLink href="/logout" class="neon-btn" activeClass="active">Logout</NavLink>
+            }
+            else
+            {
+                <!-- Show login and all other links when not logged in -->
+                <NavLink href="/login" class="neon-btn" activeClass="active">Login</NavLink>
 
-            <a href="https://www.instagram.com/faujifertilizercompany//" target="_blank" rel="noopener noreferrer">
-                <i class="fab fa-instagram"></i>
-            </a>
-            <a href="https://web.facebook.com/ffc.com.pk/?_rdc=1&_rdr#" target="_blank" rel="noopener noreferrer">
-                <i class="fab fa-facebook-f"></i>
-            </a>
-            <a href="https://www.linkedin.com/company/ffbl-careers/" target="_blank" rel="noopener noreferrer">
-                <i class="fab fa-linkedin-in"></i>
-            </a>
+                <a href="https://ffc.com.pk/about-us/" target="_blank" rel="noopener noreferrer" class="neon-btn">About</a>
+                <NavLink href="/faq" class="neon-btn" activeClass="active">FAQ</NavLink>
+
+                <a href="https://www.instagram.com/faujifertilizercompany//" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://web.facebook.com/ffc.com.pk/?_rdc=1&_rdr#" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://www.linkedin.com/company/ffbl-careers/" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-linkedin-in"></i>
+                </a>
+            }
         </div>
 
         <article class="content px-4">
@@ -107,5 +122,13 @@
         </article>
     </main>
 </div>
+@code {
+    private void Logout()
+    {
+        Console.WriteLine("Logout clicked");
+        UserState.Clear(); // Clear the email/session
+        Navigation.NavigateTo("/login", true); // Redirect to login
+    }
+}
 
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+

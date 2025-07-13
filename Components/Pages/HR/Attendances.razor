@@ -1,0 +1,132 @@
+﻿@page "/hr/attendance"
+@using FFCProject.Data
+@using FFCProject.Models
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
+@inject UserStateService UserState
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<h3 class="text-white">Attendance Tracker</h3>
+
+@if (isLoading)
+{
+    <p class="text-white">Loading...</p>
+}
+else
+{
+    <EditForm Model="@attendanceEntry" OnValidSubmit="SubmitAttendance" FormName="AttendanceForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <!-- Employee Select -->
+        <div class="form-group">
+            <label class="text-white">Select Employee</label>
+            <InputSelect class="form-control" @bind-Value="attendanceEntry.EmployeeId">
+                
+                <option value="0">-- Select --</option>
+                @foreach (var emp in employees)
+                {
+                    <option value="@emp.Id">@emp.FirstName @emp.LastName</option>
+                }
+            </InputSelect>
+
+            <ValidationMessage For="@(() => attendanceEntry.EmployeeId)" />
+        </div>
+
+        <!-- Status Select -->
+        <div class="form-group">
+            <label class="text-white">Status</label>
+            <InputSelect class="form-control" @bind-Value="attendanceEntry.Status" TValue="string">
+                <option value="">-- Select --</option>
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Leave">Leave</option>
+            </InputSelect>
+            <ValidationMessage For="@(() => attendanceEntry.Status)" />
+        </div>
+
+        <!-- Submit Button -->
+        <button class="btn btn-primary mt-2" type="submit">📌 Mark Attendance</button>
+    </EditForm>
+
+    <!-- Attendance Table -->
+    <hr />
+    <h5 class="text-white">Recent Attendance</h5>
+    <table class="table table-dark table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Employee</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var record in attendanceList)
+            {
+                <tr>
+                    <td>@record.Date.ToString("yyyy-MM-dd")</td>
+                    <td>@record.Employee?.FirstName @record.Employee?.LastName</td>
+                    <td>@record.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Employee> employees = new();
+    private List<Attendance> attendanceList = new();
+    private Attendance attendanceEntry = new() { Date = DateTime.Today };
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Validate HR access
+        var user = await DbContext.Users.FirstOrDefaultAsync(u => u.Email == UserState.Email);
+        if (user?.Designation?.ToLower() != "hr")
+        {
+            Navigation.NavigateTo("/unauthorized", true);
+            return;
+        }
+
+        // Load data
+        employees = await DbContext.Employees.OrderBy(e => e.FirstName).ToListAsync();
+        attendanceList = await DbContext.Attendances
+            .Include(a => a.Employee)
+            .OrderByDescending(a => a.Date)
+            .Take(50)
+            .ToListAsync();
+
+        isLoading = false;
+    }
+
+    private async Task SubmitAttendance()
+    {
+        // Basic validation fallback
+        if (attendanceEntry.EmployeeId == 0 || string.IsNullOrWhiteSpace(attendanceEntry.Status))
+            return;
+
+        // Prevent duplicate
+        var exists = await DbContext.Attendances.AnyAsync(a =>
+            a.EmployeeId == attendanceEntry.EmployeeId &&
+            a.Date.Date == attendanceEntry.Date.Date);
+
+        if (exists)
+        {
+            // Optional: display warning
+            return;
+        }
+
+        DbContext.Attendances.Add(attendanceEntry);
+        await DbContext.SaveChangesAsync();
+
+        // Reset form and refresh list
+        attendanceEntry = new Attendance { Date = DateTime.Today };
+        attendanceList = await DbContext.Attendances
+            .Include(a => a.Employee)
+            .OrderByDescending(a => a.Date)
+            .Take(50)
+            .ToListAsync();
+    }
+}

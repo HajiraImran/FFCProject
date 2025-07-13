@@ -1,14 +1,17 @@
-﻿public class UserStateService
+﻿namespace FFCProject.Services
 {
-    public string Email { get; private set; }
-
-    public void SetEmail(string email)
+    public class UserStateService
     {
-        Email = email;
-    }
+        public string Email { get; private set; }
 
-    public void Clear()
-    {
-        Email = null;
+        public void SetEmail(string email)
+        {
+            Email = email;
+        }
+
+        public void Clear()
+        {
+            Email = null;
+        }
     }
 }

@@ -21,5 +21,7 @@ namespace FFCProject.Models
         public string Designation { get; set; }
 
         public string Department { get; set; }
+
+
     }
 }

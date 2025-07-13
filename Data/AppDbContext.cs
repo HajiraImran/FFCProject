@@ -23,6 +23,12 @@ namespace FFCProject.Data
 
         public DbSet<Employee> Employees { get; set; }
 
+        public DbSet<Attendance> Attendances { get; set; }
+
+        public DbSet<Asset> Assets { get; set; }
+
+
+
 
     }
 }
