@@ -3,11 +3,8 @@
 @inject FFCProject.Services.UserStateService UserState
 @inject NavigationManager Navigation
 
-
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-
-
 
 <style>
     .top-row {
@@ -16,8 +13,8 @@
         justify-content: flex-end;
         gap: 10px;
         padding: 10px;
-        background-color: black !important; /* force black */
-        color: white !important; /* force white text */
+        background-color: black !important;
+        color: white !important;
     }
 
         .top-row a,
@@ -46,18 +43,15 @@
             color: #00ffff;
         }
 
-
-
     .top-row a i {
-        color: black; /* Default icon color */
+        color: black;
         font-size: 24px;
         transition: color 0.3s ease;
     }
 
     .top-row a:hover i {
-        color: #00ffff; /* Neon cyan on hover */
+        color: #00ffff;
     }
-
 
     .page {
         display: flex;
@@ -73,8 +67,8 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        background-color: black; /* change from #111 to white */
-        color: white; /* text color changed from white to black */
+        background-color: black;
+        color: white;
     }
 
     .content {
@@ -93,13 +87,11 @@
         <div class="top-row">
             @if (!string.IsNullOrEmpty(UserState.Email))
             {
-                <!-- Show only username and Logout button -->
                 <span class="navbar-brand">Welcome, @UserState.Email?.Split('@')[0]</span>
-                <NavLink href="/logout" class="neon-btn" activeClass="active">Logout</NavLink>
+                <a class="neon-btn" @onclick="Logout">Logout</a>
             }
             else
             {
-                <!-- Show login and all other links when not logged in -->
                 <NavLink href="/login" class="neon-btn" activeClass="active">Login</NavLink>
 
                 <a href="https://ffc.com.pk/about-us/" target="_blank" rel="noopener noreferrer" class="neon-btn">About</a>
@@ -122,13 +114,11 @@
         </article>
     </main>
 </div>
+
 @code {
     private void Logout()
     {
-        Console.WriteLine("Logout clicked");
         UserState.Clear(); // Clear the email/session
         Navigation.NavigateTo("/login", true); // Redirect to login
     }
 }
-
-

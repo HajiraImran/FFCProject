@@ -18,7 +18,7 @@ else
     <div class="profile-container">
         <div class="profile-card">
             <p><strong>Email:</strong> @user.Email</p>
-            <p><strong>Username:</strong> @user.Username</p>
+            <p><strong>Username:</strong> @user.UserName</p>
             <p><strong>First Name:</strong> @user.FirstName</p>
             <p><strong>Last Name:</strong> @user.LastName</p>
             <p><strong>Designation:</strong> @user.Designation</p>
@@ -27,9 +27,6 @@ else
             <p><strong>Postal Code:</strong> @user.PostalCode</p>
             <p><strong>Permanent Address:</strong> @user.PermanentAddress</p>
         </div>
-
-
-
     </div>
 }
 
@@ -61,7 +58,7 @@ else
 </style>
 
 @code {
-    private User user;
+    private ApplicationUser user;
 
     protected override async Task OnInitializedAsync()
     {

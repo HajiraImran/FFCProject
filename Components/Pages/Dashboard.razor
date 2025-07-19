@@ -1,17 +1,20 @@
 ﻿@page "/dashboard"
-@using FFCProject.Services
-@using FFCProject.Data
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
 @using FFCProject.Models
-@inject UserStateService UserState
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager Navigation
-@inject AppDbContext DbContext
-@using Microsoft.EntityFrameworkCore
+@inject IHttpContextAccessor HttpContextAccessor
+
+@using System.Security.Claims
 
 @if (isLoading)
 {
     <p class="text-white">Loading...</p>
 }
-else if (user == null)
+else if (appUser == null)
 {
     <p class="text-danger">Unauthorized. Redirecting...</p>
 }
@@ -21,13 +24,12 @@ else
         <!-- Header -->
         <div class="header-bar">
             <img src="images/FFC-logo.png" alt="FFC Logo" class="dashboard-logo" />
-           
+            <a class="logout-btn" @onclick="Logout">Logout</a>
         </div>
 
-        
         <!-- Grid Cards -->
         <div class="dashboard-grid">
-            @if (user.Designation?.ToLower() == "hr")
+            @if (appUser.Designation?.ToLower() == "hr")
             {
                 <a class="card-button" href="/hr/employees">
                     <i class="fas fa-users card-icon"></i>
@@ -38,7 +40,7 @@ else
                     <span>Attendance</span>
                 </a>
             }
-            else if (user.Designation?.ToLower() == "it")
+            else if (appUser.Designation?.ToLower() == "it")
             {
                 <a class="card-button" href="/it/support">
                     <i class="fas fa-headset card-icon"></i>
@@ -49,7 +51,7 @@ else
                     <span>Manage Assets</span>
                 </a>
             }
-            else if (user.Designation?.ToLower() == "procurement")
+            else if (appUser.Designation?.ToLower() == "procurement")
             {
                 <a class="card-button" href="/procurement/orders">
                     <i class="fas fa-shopping-cart card-icon"></i>
@@ -112,19 +114,13 @@ else
         text-decoration: none;
         font-weight: bold;
         transition: background 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
     }
 
         .logout-btn:hover {
             background-color: #e60000;
             box-shadow: 0 0 12px rgba(255, 0, 0, 0.5);
         }
-
-    .welcome-text {
-        font-size: 1.8rem;
-        font-weight: 600;
-        text-align: center;
-        margin-bottom: 20px;
-    }
 
     .dashboard-grid {
         display: grid;
@@ -135,7 +131,7 @@ else
     }
 
     .card-button {
-        background: rgba(255, 255, 255, 0.15); /* More contrast for black icons */
+        background: rgba(255, 255, 255, 0.15);
         border-radius: 16px;
         padding: 30px 20px;
         color: #fff;
@@ -157,62 +153,71 @@ else
             box-shadow: 0 0 25px rgba(241, 196, 15, 0.5);
         }
 
-
     .card-icon {
         font-size: 2.8rem;
         margin-bottom: 12px;
-        color: #000; /* Black icon color */
+        color: #000;
         transition: transform 0.3s ease, color 0.3s ease;
     }
 
     .card-button:hover .card-icon {
         transform: rotate(8deg) scale(1.1);
-        color: #f1c40f; /* Icon changes to gold on hover */
+        color: #f1c40f;
     }
 
     @@media screen and (max-width: 768px) {
-        .dashboard-wrapper
+        .dashboard-wrapper {
+            padding: 20px 10px;
+        }
 
-    {
-        padding: 20px 10px;
-    }
+        .card-button {
+            padding: 20px;
+        }
 
-    .card-button {
-        padding: 20px;
-    }
-
-    .card-icon {
-        font-size: 2.2rem;
-    }
-
-    .welcome-text {
-        font-size: 1.4rem;
-    }
-
+        .card-icon {
+            font-size: 2.2rem;
+        }
     }
 </style>
 
 @code {
-    private User user;
+    private ApplicationUser? appUser;
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrEmpty(UserState.Email))
+        var userPrincipal = HttpContextAccessor.HttpContext?.User;
+
+        if (userPrincipal == null || !userPrincipal.Identity.IsAuthenticated)
         {
             Navigation.NavigateTo("/login", true);
             return;
         }
 
-        user = await DbContext.Users.FirstOrDefaultAsync(u => u.Email == UserState.Email);
+        var email = userPrincipal.FindFirstValue(ClaimTypes.Email);
 
-        if (user == null)
+        if (string.IsNullOrWhiteSpace(email))
         {
-            UserState.Clear();
+            await SignInManager.SignOutAsync();
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        appUser = await UserManager.FindByEmailAsync(email);
+
+        if (appUser == null)
+        {
+            await SignInManager.SignOutAsync();
             Navigation.NavigateTo("/login", true);
             return;
         }
 
         isLoading = false;
+    }
+
+    private async Task Logout()
+    {
+        await SignInManager.SignOutAsync();
+        Navigation.NavigateTo("/login", true);
     }
 }

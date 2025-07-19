@@ -1,37 +1,30 @@
-﻿using System.Net;
+﻿using Microsoft.Extensions.Options;
+using System.Net;
 using System.Net.Mail;
 
 namespace FFCProject.Services
 {
     public class EmailSystem
     {
-        private readonly string smtpHost;
-        private readonly int smtpPort;
-        private readonly string smtpUser;
-        private readonly string smtpPass;
-        private readonly bool enableSsl;
+        private readonly EmailSettings _settings;
 
-        public EmailSystem(string host, int port, string user, string pass, bool ssl = true)
+        public EmailSystem(IOptions<EmailSettings> options)
         {
-            smtpHost = host;
-            smtpPort = port;
-            smtpUser = user;
-            smtpPass = pass;
-            enableSsl = ssl;
+            _settings = options.Value;
         }
 
         public async Task<bool> SendEmailAsync(string toEmail, string subject, string body, bool isHtml = true)
         {
             try
             {
-                using (SmtpClient smtp = new SmtpClient(smtpHost, smtpPort))
+                using (SmtpClient smtp = new SmtpClient(_settings.SmtpServer, _settings.Port))
                 {
-                    smtp.Credentials = new NetworkCredential(smtpUser, smtpPass);
-                    smtp.EnableSsl = enableSsl;
+                    smtp.Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password);
+                    smtp.EnableSsl = _settings.EnableSsl;
 
                     MailMessage mail = new MailMessage
                     {
-                        From = new MailAddress(smtpUser, "FFC Login System"),
+                        From = new MailAddress(_settings.SenderEmail, "FFC Login System"),
                         Subject = subject,
                         Body = body,
                         IsBodyHtml = isHtml

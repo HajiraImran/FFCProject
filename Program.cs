@@ -1,40 +1,50 @@
 ﻿using FFCProject.Components;
 using FFCProject.Services;
 using FFCProject.Data;
+using FFCProject.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NetcodeHub.Packages.Components.Toast;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Register EmailSystem
-builder.Services.AddScoped(sp =>
-    new EmailSystem(
-        "smtp.gmail.com",
-        587,
-        "h.abbubakar10@gmail.com",
-        "kzkb iufg knjf csvt\r\n"
-    )
-);
+// ✅ Load configuration for EmailSettings
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
+// ✅ Register EmailSystem using IOptions<EmailSettings>
+builder.Services.AddScoped<EmailSystem>();
 
 // ✅ Razor Components
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// ✅ EF Core
+// ✅ EF Core + Identity
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnectionString")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ✅ ADD THIS: Register API Controllers
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders(); // ✅ For OTP/reset password, etc.
+
+// ✅ Authentication & Authorization
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
+
+// ✅ Controllers & Custom Services
 builder.Services.AddControllers();
-
-// ✅ ADD THIS: Register user state service
-builder.Services.AddSingleton<UserStateService>();
-
-builder.Services.AddScoped<ToastService>();          
+builder.Services.AddScoped<UserStateService>();
+builder.Services.AddScoped<ToastService>();
 
 var app = builder.Build();
 
-// Middleware
+// ✅ Middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -45,10 +55,11 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-// ✅ Map API Controllers
-app.MapControllers();
+app.UseAuthentication(); // ✅ Identity Middleware
+app.UseAuthorization();
 
-// ✅ Map Blazor Razor Components
+// ✅ Routing
+app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

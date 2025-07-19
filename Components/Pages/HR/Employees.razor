@@ -83,11 +83,11 @@ else
 }
 
 @code {
-    private List<Employee> employees;
+    private List<Employee> employees = new();
     private bool isLoading = true;
     private bool showForm = false;
-    private Employee currentEmployee = new Employee();
-    private User currentUser;
+    private Employee currentEmployee = new();
+    private ApplicationUser currentUser;
 
     protected override async Task OnInitializedAsync()
     {
@@ -97,11 +97,12 @@ else
             return;
         }
 
+        // Load current user as ApplicationUser
         currentUser = await DbContext.Users.FirstOrDefaultAsync(u => u.Email == UserState.Email);
 
         if (currentUser == null || currentUser.Designation?.ToLower() != "hr")
         {
-            Navigation.NavigateTo("/unauthorized", true); // Optionally create an Unauthorized page
+            Navigation.NavigateTo("/unauthorized", true); // redirect if not authorized
             return;
         }
 
@@ -131,6 +132,10 @@ else
         if (currentEmployee.Id == 0)
         {
             DbContext.Employees.Add(currentEmployee);
+        }
+        else
+        {
+            DbContext.Employees.Update(currentEmployee);
         }
 
         await DbContext.SaveChangesAsync();

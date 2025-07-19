@@ -1,11 +1,9 @@
 ﻿@page "/register"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Identity
 @using FFCProject.Models
 @inject NavigationManager Navigation
-@inject FFCProject.Data.AppDbContext DbContext
-@using Microsoft.EntityFrameworkCore
-@using System.Security.Cryptography
-@using Microsoft.AspNetCore.Cryptography.KeyDerivation
+@inject UserManager<ApplicationUser> UserManager
 
 <EditForm Model="@newUser" OnValidSubmit="HandleValidSubmit">
     <DataAnnotationsValidator />
@@ -13,7 +11,6 @@
 
     <div class="login-wrapper">
         <div class="login-box">
-            <!-- ✅ FFC LOGO -->
             <div class="text-center">
                 <img src="images/FFC-logo.png" alt="FFC Logo" class="ffc-logo mb-3" />
             </div>
@@ -25,61 +22,38 @@
                 <div class="alert alert-danger py-1">@ErrorMessage</div>
             }
 
-            <!-- User Fields -->
-            <div class="form-group">
-                <InputText class="form-control" @bind-Value="newUser.FirstName" placeholder="First Name" />
-                <ValidationMessage For="@(() => newUser.FirstName)" />
-            </div>
+            <InputText class="form-control" @bind-Value="newUser.FirstName" placeholder="First Name" />
+            <ValidationMessage For="@(() => newUser.FirstName)" />
 
-            <div class="form-group">
-                <InputText class="form-control" @bind-Value="newUser.LastName" placeholder="Last Name" />
-                <ValidationMessage For="@(() => newUser.LastName)" />
-            </div>
+            <InputText class="form-control" @bind-Value="newUser.LastName" placeholder="Last Name" />
+            <ValidationMessage For="@(() => newUser.LastName)" />
 
-            <div class="form-group">
-                <InputText class="form-control" @bind-Value="newUser.Username" placeholder="Username" />
-                <ValidationMessage For="@(() => newUser.Username)" />
-            </div>
+            <InputText class="form-control" @bind-Value="newUser.Username" placeholder="Username" />
+            <ValidationMessage For="@(() => newUser.Username)" />
 
-            <div class="form-group">
-                <InputText class="form-control" @bind-Value="newUser.Email" placeholder="Email" />
-                <ValidationMessage For="@(() => newUser.Email)" />
-            </div>
+            <InputText class="form-control" @bind-Value="newUser.Email" placeholder="Email" />
+            <ValidationMessage For="@(() => newUser.Email)" />
 
-            <div class="form-group">
-                <InputText class="form-control" type="password" @bind-Value="newUser.Password" placeholder="Password" />
-                <ValidationMessage For="@(() => newUser.Password)" />
-            </div>
+            <InputText class="form-control" type="password" @bind-Value="newUser.Password" placeholder="Password" />
+            <ValidationMessage For="@(() => newUser.Password)" />
 
-            <div class="form-group">
-                <InputText class="form-control" type="password" @bind-Value="newUser.ConfirmPassword" placeholder="Confirm Password" />
-                <ValidationMessage For="@(() => newUser.ConfirmPassword)" />
-            </div>
+            <InputText class="form-control" type="password" @bind-Value="newUser.ConfirmPassword" placeholder="Confirm Password" />
+            <ValidationMessage For="@(() => newUser.ConfirmPassword)" />
 
-            <div class="form-group">
-                <InputText class="form-control" @bind-Value="newUser.Designation" placeholder="Designation" />
-                <ValidationMessage For="@(() => newUser.Designation)" />
-            </div>
+            <InputText class="form-control" @bind-Value="newUser.Designation" placeholder="Designation" />
+            <ValidationMessage For="@(() => newUser.Designation)" />
 
-            <div class="form-group">
-                <InputText class="form-control" @bind-Value="newUser.ContactNumber" placeholder="Contact Number" />
-                <ValidationMessage For="@(() => newUser.ContactNumber)" />
-            </div>
+            <InputText class="form-control" @bind-Value="newUser.ContactNumber" placeholder="Contact Number" />
+            <ValidationMessage For="@(() => newUser.ContactNumber)" />
 
-            <div class="form-group">
-                <InputText class="form-control" @bind-Value="newUser.Address" placeholder="Address" />
-                <ValidationMessage For="@(() => newUser.Address)" />
-            </div>
+            <InputText class="form-control" @bind-Value="newUser.Address" placeholder="Address" />
+            <ValidationMessage For="@(() => newUser.Address)" />
 
-            <div class="form-group">
-                <InputText class="form-control" @bind-Value="newUser.PostalCode" placeholder="Postal Code" />
-                <ValidationMessage For="@(() => newUser.PostalCode)" />
-            </div>
+            <InputText class="form-control" @bind-Value="newUser.PostalCode" placeholder="Postal Code" />
+            <ValidationMessage For="@(() => newUser.PostalCode)" />
 
-            <div class="form-group mb-3">
-                <InputText class="form-control" @bind-Value="newUser.PermanentAddress" placeholder="Permanent Address" />
-                <ValidationMessage For="@(() => newUser.PermanentAddress)" />
-            </div>
+            <InputText class="form-control" @bind-Value="newUser.PermanentAddress" placeholder="Permanent Address" />
+            <ValidationMessage For="@(() => newUser.PermanentAddress)" />
 
             <button type="submit" class="btn-register">Register</button>
 
@@ -91,33 +65,21 @@
 </EditForm>
 
 <style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        background-color: #000 !important;
-        overflow: hidden;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
     .login-wrapper {
         min-height: 100vh;
-        background:linear-gradient(to bottom right, #2c2c2c, #bfa443); /* dark grey to gold */
+        background: linear-gradient(to bottom right, #2c2c2c, #bfa443);
         display: flex;
         justify-content: center;
         align-items: center;
         padding: 20px;
     }
 
-    }
-
-    login-box {
+    .login-box {
         width: 100%;
         max-width: 700px;
         max-height: 95vh;
         overflow-y: auto;
         padding: 30px;
-        background: transparent; /* ✅ Overlay removed */
         border-radius: 15px;
         backdrop-filter: blur(12px);
         box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
@@ -135,30 +97,29 @@
         border: 2px solid transparent;
         border-radius: 8px;
         padding: 8px 12px;
-        color: white; /* White text normally */
+        color: white;
         transition: all 0.3s ease;
         width: 100%;
         font-size: 13px;
         height: 36px;
+        margin-bottom: 15px;
     }
 
         .form-control::placeholder {
-            color: white; /* White placeholder */
+            color: white;
         }
 
         .form-control:focus {
             outline: none;
             border-color: #00ffff;
             background-color: rgba(0, 0, 0, 0.8);
-            color: white; /* 👈 Force white text while typing */
             box-shadow: 0 0 6px #00ffff, 0 0 10px #00ffff88;
         }
-
 
     .btn-register {
         width: 100%;
         height: 40px;
-        background-color: black
+        background-color: black;
         color: white;
         font-weight: bold;
         border: none;
@@ -171,54 +132,29 @@
         .btn-register:hover {
             background-color: navy;
         }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
 </style>
 
 @code {
     private RegisterViewModel newUser = new();
     private string ErrorMessage;
 
-    private string HashPassword(string password, out string salt)
-    {
-        byte[] saltBytes = new byte[128 / 8];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(saltBytes);
-        salt = Convert.ToBase64String(saltBytes);
-
-        string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-            password: password,
-            salt: saltBytes,
-            prf: KeyDerivationPrf.HMACSHA256,
-            iterationCount: 10000,
-            numBytesRequested: 256 / 8));
-
-        return hashed;
-    }
-
     private async Task HandleValidSubmit()
     {
         ErrorMessage = "";
 
-        bool userExists = await DbContext.Users.AnyAsync(u => u.Username == newUser.Username);
-        if (userExists)
+        if (newUser.Password != newUser.ConfirmPassword)
         {
-            ErrorMessage = "Username already exists.";
+            ErrorMessage = "Passwords do not match.";
             return;
         }
 
-        string salt;
-        string hashedPassword = HashPassword(newUser.Password, out salt);
-
-        var user = new User
+        // Create new ApplicationUser from ViewModel
+        var user = new ApplicationUser
         {
+            UserName = newUser.Username,
+            Email = newUser.Email,
             FirstName = newUser.FirstName,
             LastName = newUser.LastName,
-            Username = newUser.Username,
-            Email = newUser.Email,
-            Password = $"{salt}.{hashedPassword}",
             Designation = newUser.Designation,
             ContactNumber = newUser.ContactNumber,
             Address = newUser.Address,
@@ -226,9 +162,18 @@
             PermanentAddress = newUser.PermanentAddress
         };
 
-        DbContext.Users.Add(user);
-        await DbContext.SaveChangesAsync();
+        var result = await UserManager.CreateAsync(user, newUser.Password);
 
-        Navigation.NavigateTo("/login");
+        if (result.Succeeded)
+        {
+            // Optional: assign role here
+            // await UserManager.AddToRoleAsync(user, "Employee");
+
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            ErrorMessage = string.Join(" ", result.Errors.Select(e => e.Description));
+        }
     }
 }

@@ -1,0 +1,55 @@
+﻿@page "/confirm-email"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using FFCProject.Models
+@using NetcodeHub.Packages.Components.Toast
+@inject NavigationManager Navigation
+@inject ToastService ToastService
+@inject UserManager<ApplicationUser> UserManager
+
+<Toast @ref="ToastService.ToastComponent" />
+
+<h3 class="text-white">Confirming your email...</h3>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var query = QueryHelpers.ParseQuery(uri.Query);
+
+            if (!query.TryGetValue("userId", out var userId) || !query.TryGetValue("token", out var token))
+            {
+                ToastService.ShowErrorToast("Invalid confirmation link.", "Error");
+                return;
+            }
+
+            var user = await UserManager.FindByIdAsync(userId!);
+            if (user == null)
+            {
+                ToastService.ShowErrorToast("User not found.", "Error");
+                return;
+            }
+
+            // Decode token as it is URL encoded
+            var decodedToken = Uri.UnescapeDataString(token!);
+
+            var result = await UserManager.ConfirmEmailAsync(user, decodedToken);
+            if (result.Succeeded)
+            {
+                ToastService.ShowSuccessToast("✅ Email confirmed! You can now log in.", "Success");
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+            else
+            {
+                ToastService.ShowErrorToast("❌ Failed to confirm email. The link may have expired or is invalid.", "Confirmation Failed");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            ToastService.ShowErrorToast("An unexpected error occurred during confirmation.", "Error");
+        }
+    }
+}

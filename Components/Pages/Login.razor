@@ -5,12 +5,15 @@
 
 @using FFCProject.Models
 @using FFCProject.Services
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @inject NavigationManager Navigation
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
 @inject FFCProject.Data.AppDbContext DbContext
 @inject EmailSystem EmailSender
 @inject UserStateService UserState
-@using Microsoft.AspNetCore.Cryptography.KeyDerivation
-@using Microsoft.EntityFrameworkCore
+@inject IJSRuntime JS
 @implements IDisposable
 
 <Toast @ref="ToastService.ToastComponent" />
@@ -72,7 +75,6 @@
             <p class="text-white">
                 <a href="/forgot-password" class="text-white"><u>Forgot Password?</u></a>
             </p>
-
         </div>
     </div>
 </EditForm>
@@ -141,10 +143,8 @@
         {
             if (!IsOtpStage)
             {
-                var user = await DbContext.Users
-                    .FirstOrDefaultAsync(u => u.Email == loginModel.Email);
-
-                if (user == null || !VerifyPassword(loginModel.Password, user.Password))
+                var user = await UserManager.FindByEmailAsync(loginModel.Email);
+                if (user == null || !await UserManager.CheckPasswordAsync(user, loginModel.Password))
                 {
                     ToastService.ShowErrorToast("❌ Invalid email or password.", "Login Failed");
                     return;
@@ -189,9 +189,15 @@
                 DbContext.OtpEntries.Remove(otpRecord);
                 await DbContext.SaveChangesAsync();
 
-                UserState.SetEmail(loginModel.Email);
+                var user = await UserManager.FindByEmailAsync(loginModel.Email);
+
+                await SignInManager.SignInAsync(user, isPersistent: false);
+
+                UserState.Email = loginModel.Email;
+
                 loginModel.OTP = "";
-                Navigation.NavigateTo("/dashboard", true);
+                Console.WriteLine("✅ OTP verified. Navigating to dashboard...");
+                await JS.InvokeVoidAsync("redirectTo", "/dashboard");
             }
         }
         finally
@@ -276,26 +282,6 @@
             resendTimer?.Dispose();
             await InvokeAsync(StateHasChanged);
         }, null, seconds * 1000, Timeout.Infinite);
-    }
-
-    private bool VerifyPassword(string enteredPassword, string storedPassword)
-    {
-        var parts = storedPassword.Split('.');
-        if (parts.Length != 2)
-            return false;
-
-        string salt = parts[0];
-        string storedHash = parts[1];
-        byte[] saltBytes = Convert.FromBase64String(salt);
-
-        string enteredHash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-            password: enteredPassword,
-            salt: saltBytes,
-            prf: KeyDerivationPrf.HMACSHA256,
-            iterationCount: 10000,
-            numBytesRequested: 256 / 8));
-
-        return storedHash == enteredHash;
     }
 
     public void Dispose()
